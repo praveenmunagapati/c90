@@ -1,34 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct {
+    int id;
+    char model[20];
+    double price;
+} Laptop;
+
 int main() {
-    setbuf(stdout,NULL);
-    // 1. Open a text file for writing ("w")
-    FILE *write_ptr = fopen("C:\\Users\\sir\\CLionProjects\\c90\\log.txt", "w");
-    if (write_ptr == NULL) {
-        printf("Error opening file for writing!\n");
-        return 1;
+    Laptop inventory[2] = {
+        {101, "ThinkPad", 85000.50},
+        {102, "MacBook", 120000.00}
+    };
+
+    // 1. Open binary file for writing ("wb")
+    FILE *file_out = fopen("inventory.bin", "wb");
+    if (!file_out) return 1;
+
+    // Write the entire array block of 2 structures at once
+    fwrite(inventory, sizeof(Laptop), 2, file_out);
+    fclose(file_out);
+
+    // 2. Open binary file for reading ("rb")
+    FILE *file_in = fopen("inventory.bin", "rb");
+    if (!file_in) return 1;
+
+    Laptop imported_item;
+    printf("--- Reading Binary Structs ---\n");
+    // Read structured blocks one-by-one
+    while (fread(&imported_item, sizeof(Laptop), 1, file_in) == 1) {
+        printf("ID: %d | Model: %s | Price: %.2f\n",
+               imported_item.id, imported_item.model, imported_item.price);
     }
 
-    // Write text formatting
-    fprintf(write_ptr, "System Log Entry\n");
-    fprintf(write_ptr, "Status: OK\n");
-    fclose(write_ptr); // Always close the file to flush buffers
-
-    // 2. Open the text file for reading ("r")
-    FILE *read_ptr = fopen("log.txt", "r");
-    if (read_ptr == NULL) {
-        printf("Error opening file for reading!\n");
-        return 1;
-    }
-
-    char buffer[256];
-    printf("--- Reading Text File Content ---\n");
-    // Read line-by-line until end-of-file
-    while (fgets(buffer, sizeof(buffer), read_ptr) != NULL) {
-        printf("%s", buffer);
-    }
-
-    fclose(read_ptr);
+    fclose(file_in);
     return 0;
 }
