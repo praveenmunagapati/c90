@@ -204,16 +204,180 @@
 //     return 0;
 // }
 
-#include <stdio.h>
+// #include <stdio.h>
+//
+// #define SIZE 100
+// #define BASE 100000000
+//
+// typedef struct
+// {
+//     unsigned int digit[SIZE];
+//     int length;
+// } BigInt;
+//
+//
+// void set(BigInt *x, unsigned int value)
+// {
+//     x->length = 0;
+//
+//     while (value > 0)
+//     {
+//         x->digit[x->length++] = value % BASE;
+//         value /= BASE;
+//     }
+//
+//     if (x->length == 0)
+//         x->length = 1;
+// }
+// int add(BigInt *a, BigInt *b, BigInt *result)
+// {
+//     unsigned long long sum;
+//     unsigned long long carry = 0;
+//
+//     int i;
+//
+//     for (i = 0; i < a->length || i < b->length || carry; i++)
+//     {
+//         if (i >= SIZE)
+//         {
+//             return 0;       // BigInt overflow
+//         }
+//
+//         sum = carry;
+//
+//         if (i < a->length)
+//             sum += a->digit[i];
+//
+//         if (i < b->length)
+//             sum += b->digit[i];
+//
+//         result->digit[i] = sum % BASE;
+//
+//         carry = sum / BASE;
+//     }
+//
+//     result->length = i;
+//
+//     return 1;               // success
+// }
+//
+// void addunmodified(BigInt *a, BigInt *b, BigInt *result)
+// {
+//     unsigned long long sum;
+//     unsigned long long carry = 0;
+//
+//     int i;
+//
+//     for (i = 0; i < a->length || i < b->length || carry; i++)
+//     {
+//         sum = carry;
+//
+//         if (i < a->length)
+//             sum += a->digit[i];
+//
+//         if (i < b->length)
+//             sum += b->digit[i];
+//
+//         result->digit[i] = sum % BASE;
+//
+//         carry = sum / BASE;
+//     }
+//
+//     result->length = i;
+// }
+//
+//
+// void print(BigInt *x)
+// {
+//     int i;
+//
+//     printf("%u", x->digit[x->length - 1]);
+//
+//     for (i = x->length - 2; i >= 0; i--)
+//         printf("%08u", x->digit[i]);
+//
+//     printf("\n");
+// }
+//
+//
+// int main()
+// {
+//     BigInt first;
+//     BigInt second;
+//     BigInt sum;
+//
+//     set(&first, 0);
+//     set(&second, 1);
+//
+//     int n = 10000;
+//
+//     for (int i = 0; i < n; i++)
+//     {   printf("%d\t",i);;
+//         print(&first);
+//
+//         if (!add(&first, &second, &sum))
+//         {
+//             printf("BigInt overflow: capacity reached\n");
+//             break;
+//         }
+//
+//         first = second;
+//         second = sum;
+//     }
+//
+//     return 0;
+// }
 
-#define SIZE 100
+#include <stdio.h>
+#include <stdlib.h>
+
 #define BASE 100000000
+
 
 typedef struct
 {
-    unsigned int digit[SIZE];
-    int length;
+    unsigned int *digit;
+    size_t length;
+    size_t capacity;
 } BigInt;
+
+
+void init(BigInt *x)
+{
+    x->capacity = 4;
+
+    x->digit = malloc(
+        x->capacity * sizeof(unsigned int)
+    );
+
+    x->length = 1;
+    x->digit[0] = 0;
+}
+
+
+void destroy(BigInt *x)
+{
+    free(x->digit);
+
+    x->digit = NULL;
+    x->length = 0;
+    x->capacity = 0;
+}
+
+
+void reserve(BigInt *x, size_t required)
+{
+    if (required <= x->capacity)
+        return;
+
+    while (x->capacity < required)
+        x->capacity *= 2;
+
+    x->digit = realloc(
+        x->digit,
+        x->capacity * sizeof(unsigned int)
+    );
+}
 
 
 void set(BigInt *x, unsigned int value)
@@ -227,48 +391,29 @@ void set(BigInt *x, unsigned int value)
     }
 
     if (x->length == 0)
-        x->length = 1;
-}
-int add(BigInt *a, BigInt *b, BigInt *result)
-{
-    unsigned long long sum;
-    unsigned long long carry = 0;
-
-    int i;
-
-    for (i = 0; i < a->length || i < b->length || carry; i++)
     {
-        if (i >= SIZE)
-        {
-            return 0;       // BigInt overflow
-        }
-
-        sum = carry;
-
-        if (i < a->length)
-            sum += a->digit[i];
-
-        if (i < b->length)
-            sum += b->digit[i];
-
-        result->digit[i] = sum % BASE;
-
-        carry = sum / BASE;
+        x->length = 1;
+        x->digit[0] = 0;
     }
-
-    result->length = i;
-
-    return 1;               // success
 }
 
-void addunmodified(BigInt *a, BigInt *b, BigInt *result)
+
+void add(BigInt *a, BigInt *b, BigInt *result)
 {
     unsigned long long sum;
     unsigned long long carry = 0;
 
-    int i;
+    size_t max;
 
-    for (i = 0; i < a->length || i < b->length || carry; i++)
+    max = a->length > b->length
+        ? a->length
+        : b->length;
+
+    reserve(result, max + 1);
+
+    size_t i;
+
+    for (i = 0; i < max || carry; i++)
     {
         sum = carry;
 
@@ -306,24 +451,38 @@ int main()
     BigInt second;
     BigInt sum;
 
+    init(&first);
+    init(&second);
+    init(&sum);
+
     set(&first, 0);
     set(&second, 1);
 
     int n = 10000;
 
     for (int i = 0; i < n; i++)
-    {   printf("%d\t",i);;
+    {
+        printf("%d\t",i);
         print(&first);
 
-        if (!add(&first, &second, &sum))
-        {
-            printf("BigInt overflow: capacity reached\n");
-            break;
-        }
+        add(&first, &second, &sum);
 
+        /*
+             first = second
+             second = sum
+        */
+
+        BigInt temp;
+
+        temp = first;
         first = second;
         second = sum;
+        sum = temp;
     }
+
+    destroy(&first);
+    destroy(&second);
+    destroy(&sum);
 
     return 0;
 }
