@@ -102,44 +102,148 @@
 //     return 0;
 // }
 
+// #include <stdio.h>
+//
+// #define SIZE 10000
+//
+// typedef struct
+// {
+//     int digit[SIZE];
+//     int length;
+// } BigInt;
+//
+//
+// void set(BigInt *x, int value)
+// {
+//     x->length = 0;
+//
+//     if (value == 0)
+//     {
+//         x->digit[0] = 0;
+//         x->length = 1;
+//         return;
+//     }
+//
+//     while (value > 0)
+//     {
+//         x->digit[x->length++] = value % 10;
+//         value /= 10;
+//     }
+// }
+//
+//
+// void add(BigInt *a, BigInt *b, BigInt *result)
+// {
+//     int carry = 0;
+//     int i;
+//
+//     for (i = 0; i < a->length || i < b->length || carry; i++)
+//     {
+//         int sum = carry;
+//
+//         if (i < a->length)
+//             sum += a->digit[i];
+//
+//         if (i < b->length)
+//             sum += b->digit[i];
+//
+//         result->digit[i] = sum % 10;
+//         carry = sum / 10;
+//     }
+//
+//     result->length = i;
+// }
+//
+//
+// void print(BigInt *x)
+// {
+//     for (int i = x->length - 1; i >= 0; i--)
+//         printf("%d", x->digit[i]);
+//
+//     printf("\n");
+// }
+//
+//
+// int main()
+// {
+//     BigInt first;
+//     BigInt second;
+//     BigInt sum;
+//
+//     set(&first, 0);
+//     set(&second, 1);
+//
+//     int n = 10000;
+//
+//     for (int i = 0; i < n; i++)
+//     {
+//         printf("%d\t",i);;
+//
+//         print(&first);
+//
+//         add(&first, &second, &sum);
+//
+//         first = second;
+//         second = sum;
+//     }
+//
+//     return 0;
+// }
+//
+//
+// #include <stdio.h>
+// //d) Write a program for display values reverse order from an array using a pointer.
+//
+// int mainp() {
+//     int array[10] = {10,55,37,49,54,26,75,87,19,101};
+//     int *parray = &array[9];
+//     for(int i = 0;i<10;i++){
+//         printf("%d\t",*(parray-i));
+//     }
+//     printf("Try clicking the Run button.");
+//     return 0;
+// }
+
 #include <stdio.h>
 
-#define SIZE 10000
+#define SIZE 100
+#define BASE 100000000
 
 typedef struct
 {
-    int digit[SIZE];
+    unsigned int digit[SIZE];
     int length;
 } BigInt;
 
 
-void set(BigInt *x, int value)
+void set(BigInt *x, unsigned int value)
 {
     x->length = 0;
 
-    if (value == 0)
-    {
-        x->digit[0] = 0;
-        x->length = 1;
-        return;
-    }
-
     while (value > 0)
     {
-        x->digit[x->length++] = value % 10;
-        value /= 10;
+        x->digit[x->length++] = value % BASE;
+        value /= BASE;
     }
+
+    if (x->length == 0)
+        x->length = 1;
 }
-
-
-void add(BigInt *a, BigInt *b, BigInt *result)
+int add(BigInt *a, BigInt *b, BigInt *result)
 {
-    int carry = 0;
+    unsigned long long sum;
+    unsigned long long carry = 0;
+
     int i;
 
     for (i = 0; i < a->length || i < b->length || carry; i++)
     {
-        int sum = carry;
+        if (i >= SIZE)
+        {
+            return 0;       // BigInt overflow
+        }
+
+        sum = carry;
 
         if (i < a->length)
             sum += a->digit[i];
@@ -147,8 +251,36 @@ void add(BigInt *a, BigInt *b, BigInt *result)
         if (i < b->length)
             sum += b->digit[i];
 
-        result->digit[i] = sum % 10;
-        carry = sum / 10;
+        result->digit[i] = sum % BASE;
+
+        carry = sum / BASE;
+    }
+
+    result->length = i;
+
+    return 1;               // success
+}
+
+void addunmodified(BigInt *a, BigInt *b, BigInt *result)
+{
+    unsigned long long sum;
+    unsigned long long carry = 0;
+
+    int i;
+
+    for (i = 0; i < a->length || i < b->length || carry; i++)
+    {
+        sum = carry;
+
+        if (i < a->length)
+            sum += a->digit[i];
+
+        if (i < b->length)
+            sum += b->digit[i];
+
+        result->digit[i] = sum % BASE;
+
+        carry = sum / BASE;
     }
 
     result->length = i;
@@ -157,8 +289,12 @@ void add(BigInt *a, BigInt *b, BigInt *result)
 
 void print(BigInt *x)
 {
-    for (int i = x->length - 1; i >= 0; i--)
-        printf("%d", x->digit[i]);
+    int i;
+
+    printf("%u", x->digit[x->length - 1]);
+
+    for (i = x->length - 2; i >= 0; i--)
+        printf("%08u", x->digit[i]);
 
     printf("\n");
 }
@@ -176,12 +312,14 @@ int main()
     int n = 10000;
 
     for (int i = 0; i < n; i++)
-    {
-        printf("%d\t",i);;
-
+    {   printf("%d\t",i);;
         print(&first);
 
-        add(&first, &second, &sum);
+        if (!add(&first, &second, &sum))
+        {
+            printf("BigInt overflow: capacity reached\n");
+            break;
+        }
 
         first = second;
         second = sum;
