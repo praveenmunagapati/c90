@@ -327,7 +327,165 @@
 //
 //     return 0;
 // }
-
+//
+// #include <stdio.h>
+// #include <stdlib.h>
+//
+// #define BASE 100000000
+//
+//
+// typedef struct
+// {
+//     unsigned int *digit;
+//     size_t length;
+//     size_t capacity;
+// } BigInt;
+//
+//
+// void init(BigInt *x)
+// {
+//     x->capacity = 4;
+//
+//     x->digit = malloc(
+//         x->capacity * sizeof(unsigned int)
+//     );
+//
+//     x->length = 1;
+//     x->digit[0] = 0;
+// }
+//
+//
+// void destroy(BigInt *x)
+// {
+//     free(x->digit);
+//
+//     x->digit = NULL;
+//     x->length = 0;
+//     x->capacity = 0;
+// }
+//
+//
+// void reserve(BigInt *x, size_t required)
+// {
+//     if (required <= x->capacity)
+//         return;
+//
+//     while (x->capacity < required)
+//         x->capacity *= 2;
+//
+//     x->digit = realloc(
+//         x->digit,
+//         x->capacity * sizeof(unsigned int)
+//     );
+// }
+//
+//
+// void set(BigInt *x, unsigned int value)
+// {
+//     x->length = 0;
+//
+//     while (value > 0)
+//     {
+//         x->digit[x->length++] = value % BASE;
+//         value /= BASE;
+//     }
+//
+//     if (x->length == 0)
+//     {
+//         x->length = 1;
+//         x->digit[0] = 0;
+//     }
+// }
+//
+//
+// void add(BigInt *a, BigInt *b, BigInt *result)
+// {
+//     unsigned long long sum;
+//     unsigned long long carry = 0;
+//
+//     size_t max;
+//
+//     max = a->length > b->length
+//         ? a->length
+//         : b->length;
+//
+//     reserve(result, max + 1);
+//
+//     size_t i;
+//
+//     for (i = 0; i < max || carry; i++)
+//     {
+//         sum = carry;
+//
+//         if (i < a->length)
+//             sum += a->digit[i];
+//
+//         if (i < b->length)
+//             sum += b->digit[i];
+//
+//         result->digit[i] = sum % BASE;
+//
+//         carry = sum / BASE;
+//     }
+//
+//     result->length = i;
+// }
+//
+//
+// void print(BigInt *x)
+// {
+//     int i;
+//
+//     printf("%u", x->digit[x->length - 1]);
+//
+//     for (i = x->length - 2; i >= 0; i--)
+//         printf("%08u", x->digit[i]);
+//
+//     printf("\n");
+// }
+//
+//
+// int main()
+// {
+//     BigInt first;
+//     BigInt second;
+//     BigInt sum;
+//
+//     init(&first);
+//     init(&second);
+//     init(&sum);
+//
+//     set(&first, 0);
+//     set(&second, 1);
+//
+//     int n = 10000;
+//
+//     for (int i = 0; i < n; i++)
+//     {
+//         printf("%d\t",i);
+//         print(&first);
+//
+//         add(&first, &second, &sum);
+//
+//         /*
+//              first = second
+//              second = sum
+//         */
+//
+//         BigInt temp;
+//
+//         temp = first;
+//         first = second;
+//         second = sum;
+//         sum = temp;
+//     }
+//
+//     destroy(&first);
+//     destroy(&second);
+//     destroy(&sum);
+//
+//     return 0;
+// }
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -347,8 +505,14 @@ void init(BigInt *x)
     x->capacity = 4;
 
     x->digit = malloc(
-        x->capacity * sizeof(unsigned int)
+        x->capacity * sizeof *x->digit
     );
+
+    if (x->digit == NULL)
+    {
+        printf("Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
 
     x->length = 1;
     x->digit[0] = 0;
@@ -370,23 +534,47 @@ void reserve(BigInt *x, size_t required)
     if (required <= x->capacity)
         return;
 
-    while (x->capacity < required)
-        x->capacity *= 2;
+    size_t new_capacity = x->capacity;
 
-    x->digit = realloc(
+    while (new_capacity < required)
+        new_capacity *= 2;
+
+    unsigned int *temp = realloc(
         x->digit,
-        x->capacity * sizeof(unsigned int)
+        new_capacity * sizeof *x->digit
     );
+
+    if (temp == NULL)
+    {
+        printf("Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    x->digit = temp;
+    x->capacity = new_capacity;
 }
 
 
-void set(BigInt *x, unsigned int value)
+void normalize(BigInt *x)
+{
+    while (x->length > 1 &&
+           x->digit[x->length - 1] == 0)
+    {
+        x->length--;
+    }
+}
+
+
+void set(BigInt *x, unsigned long long value)
 {
     x->length = 0;
 
     while (value > 0)
     {
+        reserve(x, x->length + 1);
+
         x->digit[x->length++] = value % BASE;
+
         value /= BASE;
     }
 
@@ -398,24 +586,49 @@ void set(BigInt *x, unsigned int value)
 }
 
 
-void add(BigInt *a, BigInt *b, BigInt *result)
+void copy(BigInt *destination,
+          const BigInt *source)
 {
-    unsigned long long sum;
-    unsigned long long carry = 0;
+    reserve(destination, source->length);
 
-    size_t max;
+    for (size_t i = 0; i < source->length; i++)
+    {
+        destination->digit[i] =
+            source->digit[i];
+    }
 
-    max = a->length > b->length
+    destination->length =
+        source->length;
+}
+
+
+void swap(BigInt *a, BigInt *b)
+{
+    BigInt temp = *a;
+
+    *a = *b;
+    *b = temp;
+}
+
+
+void add(const BigInt *a,
+         const BigInt *b,
+         BigInt *result)
+{
+    size_t max =
+        a->length > b->length
         ? a->length
         : b->length;
 
     reserve(result, max + 1);
 
+    unsigned long long carry = 0;
+
     size_t i;
 
-    for (i = 0; i < max || carry; i++)
+    for (i = 0; i < max; i++)
     {
-        sum = carry;
+        unsigned long long sum = carry;
 
         if (i < a->length)
             sum += a->digit[i];
@@ -423,23 +636,32 @@ void add(BigInt *a, BigInt *b, BigInt *result)
         if (i < b->length)
             sum += b->digit[i];
 
-        result->digit[i] = sum % BASE;
+        result->digit[i] =
+            sum % BASE;
 
-        carry = sum / BASE;
+        carry =
+            sum / BASE;
     }
 
+    if (carry)
+        result->digit[i++] = carry;
+
     result->length = i;
+
+    normalize(result);
 }
 
 
-void print(BigInt *x)
+void print(const BigInt *x)
 {
-    int i;
+    printf("%u",
+           x->digit[x->length - 1]);
 
-    printf("%u", x->digit[x->length - 1]);
-
-    for (i = x->length - 2; i >= 0; i--)
-        printf("%08u", x->digit[i]);
+    for (size_t i = x->length - 1; i > 0; i--)
+    {
+        printf("%08u",
+               x->digit[i - 1]);
+    }
 
     printf("\n");
 }
@@ -465,19 +687,12 @@ int main()
         printf("%d\t",i);
         print(&first);
 
-        add(&first, &second, &sum);
+        add(&first,
+            &second,
+            &sum);
 
-        /*
-             first = second
-             second = sum
-        */
-
-        BigInt temp;
-
-        temp = first;
-        first = second;
-        second = sum;
-        sum = temp;
+        swap(&first, &second);
+        swap(&second, &sum);
     }
 
     destroy(&first);
