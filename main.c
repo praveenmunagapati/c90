@@ -1,38 +1,42 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct {
-    int id;
-    char model[20];
-    double price;
-} Laptop;
 
 int main() {
-    Laptop inventory[2] = {
-        {101, "ThinkPad", 85000.50},
-        {102, "MacBook", 120000.00}
-    };
+    /* d) A Fibonacci sequence is defined as follows:
+       the first and second terms in the sequence are 0 and 1.
+       Subsequent terms are found by adding the preceding two terms in the sequence.
+       write a C program to generate the first n terms of the sequence.
+    */
 
-    // 1. Open binary file for writing ("wb")
-    FILE *file_out = fopen("inventory.bin", "wb");
-    if (!file_out) return 1;
+    unsigned long long sum = 0;
+    unsigned long long n = 100;
+    unsigned long long first = 0;
+    unsigned long long second = 1;
+    printf("%llu\n",first);
+    printf("%llu\n",second);
 
-    // Write the entire array block of 2 structures at once
-    fwrite(inventory, sizeof(Laptop), 2, file_out);
-    fclose(file_out);
+    for (int i = 1;i<=n;i++) {
 
-    // 2. Open binary file for reading ("rb")
-    FILE *file_in = fopen("inventory.bin", "rb");
-    if (!file_in) return 1;
+        if (second > UINT64_MAX - first)
+        {
+            printf("reached max allowed space %llu \n ",ULONG_LONG_MAX);
+            break;
+            /*
+             *first 4660046610375530309 + second 7540113804746346429 =  sum 12200160415121876738
+             * first 7540113804746346429
+             * second 12200160415121876738
+             * second > UINT64_MAX - first
+             *         18446744073709551615 - 7540113804746346429 = 10906630268963205186
+             *         12200160415121876738 > 10906630268963205186 (low space)*/
+        }
+        sum = first + second;
+        printf("%d first %llu + second %llu =  sum %llu\n",i,first,second,sum);
+        first = second;
+        second = sum;
 
-    Laptop imported_item;
-    printf("--- Reading Binary Structs ---\n");
-    // Read structured blocks one-by-one
-    while (fread(&imported_item, sizeof(Laptop), 1, file_in) == 1) {
-        printf("ID: %d | Model: %s | Price: %.2f\n",
-               imported_item.id, imported_item.model, imported_item.price);
     }
 
-    fclose(file_in);
     return 0;
 }
