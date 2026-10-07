@@ -29,7 +29,12 @@ int main() {
              * second 12200160415121876738
              * second > UINT64_MAX - first
              *         18446744073709551615 - 7540113804746346429 = 10906630268963205186
-             *         12200160415121876738 > 10906630268963205186 (low space)*/
+             *         12200160415121876738 > 10906630268963205186 (low space)
+             *
+             *
+             *         That “remaining space” way of thinking is the key.
+             *         Once you see it that way, unsigned overflow checks become much easier to remember.
+             */
         }
         sum = first + second;
         printf("%d first %llu + second %llu =  sum %llu\n",i,first,second,sum);
