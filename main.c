@@ -49,51 +49,139 @@
 //
 //     return 0;
 // }
+// #include <stdio.h>
+//
+// void print128(unsigned __int128 n)
+// {
+//     if (n == 0)
+//     {
+//         printf("0");
+//         return;
+//     }
+//
+//     char digits[40];
+//     int i = 0;
+//
+//     while (n > 0)
+//     {
+//         digits[i++] = '0' + n % 10;
+//         n /= 10;
+//     }
+//
+//     while (i--)
+//         putchar(digits[i]);
+// }
+//
+// int main()
+// {
+//     setbuf(stdout,NULL);
+//     unsigned __int128 first = 0;
+//     unsigned __int128 second = 1;
+//     unsigned __int128 sum;
+//
+//     int n = 1000;
+//
+//     for (int i = 0; i < n; i++)
+//     {
+//                 printf("%d\t",i);
+//         print128(first);
+//         printf("\n");
+//
+//         sum = first + second;
+//
+//         if (sum < first)
+//         {
+//             printf("128-bit overflow reached\n");
+//             break;
+//         }
+//
+//         first = second;
+//         second = sum;
+//     }
+//
+//     return 0;
+// }
+
 #include <stdio.h>
 
-void print128(unsigned __int128 n)
+#define SIZE 10000
+
+typedef struct
 {
-    if (n == 0)
+    int digit[SIZE];
+    int length;
+} BigInt;
+
+
+void set(BigInt *x, int value)
+{
+    x->length = 0;
+
+    if (value == 0)
     {
-        printf("0");
+        x->digit[0] = 0;
+        x->length = 1;
         return;
     }
 
-    char digits[40];
-    int i = 0;
-
-    while (n > 0)
+    while (value > 0)
     {
-        digits[i++] = '0' + n % 10;
-        n /= 10;
+        x->digit[x->length++] = value % 10;
+        value /= 10;
+    }
+}
+
+
+void add(BigInt *a, BigInt *b, BigInt *result)
+{
+    int carry = 0;
+    int i;
+
+    for (i = 0; i < a->length || i < b->length || carry; i++)
+    {
+        int sum = carry;
+
+        if (i < a->length)
+            sum += a->digit[i];
+
+        if (i < b->length)
+            sum += b->digit[i];
+
+        result->digit[i] = sum % 10;
+        carry = sum / 10;
     }
 
-    while (i--)
-        putchar(digits[i]);
+    result->length = i;
 }
+
+
+void print(BigInt *x)
+{
+    for (int i = x->length - 1; i >= 0; i--)
+        printf("%d", x->digit[i]);
+
+    printf("\n");
+}
+
 
 int main()
 {
-    setbuf(stdout,NULL);
-    unsigned __int128 first = 0;
-    unsigned __int128 second = 1;
-    unsigned __int128 sum;
+    BigInt first;
+    BigInt second;
+    BigInt sum;
 
-    int n = 1000;
+    set(&first, 0);
+    set(&second, 1);
+
+    int n = 10000;
 
     for (int i = 0; i < n; i++)
     {
-                printf("%d\t",i);
-        print128(first);
-        printf("\n");
+        printf("%d\t",i);;
 
-        sum = first + second;
+        print(&first);
 
-        if (sum < first)
-        {
-            printf("128-bit overflow reached\n");
-            break;
-        }
+        add(&first, &second, &sum);
 
         first = second;
         second = sum;
