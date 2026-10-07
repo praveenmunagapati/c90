@@ -669,6 +669,7 @@ void print(const BigInt *x)
 
 int main()
 {
+    setbuf(stdout,NULL);
     BigInt first;
     BigInt second;
     BigInt sum;
