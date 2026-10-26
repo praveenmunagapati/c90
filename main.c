@@ -1,13 +1,9 @@
 #include <stdio.h>
-int factorial(int i) {
-    if (i == 0) {
-        return 1;
-    }
-    return i * factorial(i-1);
+
+int f(int n) {
+    return n ? n * f(n - 1) : 1;
 }
+
 int main() {
-    setbuf(stdout,0);
-    //factorial  recursion
-    printf("%d\n",factorial(5));
-    return 0;
+    printf("%d", f(5));
 }
