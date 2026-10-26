@@ -1,18 +1,29 @@
 #include <stdio.h>
 
-int fact(int n) {
-    printf("Entering: fact(%d)\n", n);
+void fabinacci(int a , int b) {
+    if (b>1000) {
+        return ;
+    }
+    int fabi = a + b;
+    printf("%d\t",fabi);
+    fabinacci(b,fabi);
 
-    if (n == 0)
-        return 1;
-
-    int result = n * fact(n - 1);
-
-    printf("Returning: fact(%d) = %d\n", n, result);
-    return result;
 }
 
 int main() {
-    printf("Answer = %d\n", fact(5));
+    // int a = 0;
+    // int b = 1;
+    // int fabi = a + b;
+    // printf("%d\t",a);
+    // printf("%d\t",b);
+    // while (fabi<100) {
+    //     printf("%d\t",fabi);
+    //     a = b;
+    //     b = fabi;
+    //     fabi = a+b;
+    // }
+    fabinacci(0,1);
+
+
     return 0;
 }
