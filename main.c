@@ -1,17 +1,36 @@
 #include <stdio.h>
+#include <string.h>
 /*
-        d) Write a program for display values reverse order from an array using a pointer.
+    a) Write a C program that uses functions to perform the following operations:
+        I. To insert a sub-string into a given main string from a given position.
+        II. To delete n Characters from a given position in a given string.
 */
 
 int main() {
-    int array[5] = {8,6,5,4,9};
-    int *parray = (array+sizeof(array)/sizeof(int)-1);
-    printf("%p\n",&array[4]);
-    printf("%p\n",parray);
-    for (int i = 0; i < 5; ++i) {
-        //printf("%d\t",*(parray - i));
-        printf("%d\t",*parray--);
+    char string[20] = "hello";
+    printf("%s\n",string);
+    //I. To insert a sub-string into a given main string from a given position.
+    int pos = 3;
+    char substring[20] = "world";
+    char newstring[40];
+    //lets copy up to pos 2
+    for (int i = 0; i < pos; ++i) {
+        newstring[i]  = string[i];
     }
+    printf("%s\n",newstring);
+    //now copy substring
+    for (int i = 0; i < strlen(substring); ++i) {
+        newstring[pos+i]  = substring[i];
+    }
+    printf("%s\n",newstring);
+    //now append remaining  main string
+    for (int i = 0; i < strlen(string) - pos + 1; ++i) {
+        newstring[pos + strlen(substring) + i]  = string[pos + i];
+    }
+    printf("%s\n",newstring);
+    
+
+
 
     return 0;
 }
